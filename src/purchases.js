@@ -52,12 +52,43 @@ function validatePurchase(data) {
 }
 
 export async function handlePurchases(request, env) {
-  if (!['GET', 'POST'].includes(request.method)) {
-    return json({ error: 'Methode nicht erlaubt.' }, 405, { Allow: 'GET, POST' });
+  const pathname = new URL(request.url).pathname;
+  const updateMatch = pathname.match(/^\/api\/purchases\/(\d+)$/);
+  const isUpdate = Boolean(updateMatch);
+  const purchaseId = isUpdate ? Number(updateMatch[1]) : null;
+  const allowedMethods = isUpdate ? ['PUT', 'DELETE'] : ['GET', 'POST'];
+
+  if (!allowedMethods.includes(request.method)) {
+    return json({ error: 'Methode nicht erlaubt.' }, 405, { Allow: allowedMethods.join(', ') });
+  }
+  if (isUpdate && (!Number.isSafeInteger(purchaseId) || purchaseId < 1)) {
+    return json({ error: 'Die Kauf-ID ist ungültig.' }, 400);
   }
 
   try {
-    if (request.method === 'GET') {
+    if (request.method === 'DELETE') {
+      // Löschaktionen dürfen nur von dieser BrickTrack-Seite kommen.
+      const origin = request.headers.get('Origin');
+      if (origin && origin !== new URL(request.url).origin) {
+        return json({ error: 'Diese Anfrage stammt von einer anderen Webseite.' }, 403);
+      }
+
+      try {
+        const deletedPurchase = await env.DB.prepare(
+          'DELETE FROM purchases WHERE id = ? RETURNING id'
+        ).bind(purchaseId).first();
+        if (!deletedPurchase) return json({ error: 'Dieser Einkauf wurde nicht gefunden.' }, 404);
+        return json({ deleted: true, id: deletedPurchase.id });
+      } catch (error) {
+        // Künftige Verkäufe sollen purchase_id mit ON DELETE RESTRICT verknüpfen.
+        if (/FOREIGN KEY constraint failed/i.test(error.message || '')) {
+          return json({ error: 'Dieser Einkauf kann nicht gelöscht werden, weil ihm noch Verkäufe zugeordnet sind.' }, 409);
+        }
+        throw error;
+      }
+    }
+
+    if (!isUpdate && request.method === 'GET') {
       const { results } = await env.DB.prepare(
         'SELECT * FROM purchases ORDER BY purchase_date DESC, id DESC'
       ).all();
@@ -82,6 +113,21 @@ export async function handlePurchases(request, env) {
     const { errors, purchase } = validatePurchase(data);
     if (Object.keys(errors).length) {
       return json({ error: 'Bitte die Eingaben prüfen.', errors }, 400);
+    }
+
+    if (isUpdate) {
+      // Nur die bearbeitbaren Felder ändern; id und created_at bleiben unverändert.
+      const updatedPurchase = await env.DB.prepare(`
+        UPDATE purchases
+        SET purchase_date = ?, kind = ?, description = ?, price_cents = ?,
+            quantity = ?, source = ?, owner = ?, notes = ?
+        WHERE id = ?
+        RETURNING *
+      `).bind(purchase.purchase_date, purchase.kind, purchase.description, purchase.price_cents,
+        purchase.quantity, purchase.source, purchase.owner, purchase.notes, purchaseId).first();
+
+      if (!updatedPurchase) return json({ error: 'Dieser Einkauf wurde nicht gefunden.' }, 404);
+      return json({ purchase: updatedPurchase });
     }
 
     const savedPurchase = await env.DB.prepare(`

@@ -115,6 +115,7 @@ td { padding: 16px; border-bottom: 1px solid #344458; font-size: 11px; }
 /* Einkaufsverwaltung: dieselben Farben und Formen wie die Übersicht. */
 .purchase-panel { margin-bottom: 28px; }
 .purchase-form { padding: 0 22px 22px; }
+#purchase-form-heading { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
 .form-hint { color: var(--muted); font-size: 11px; margin: 0 0 16px; }
 .purchase-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
 .purchase-fields label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #b9c7da; }
@@ -133,6 +134,13 @@ button:disabled { opacity: .55; cursor: wait; }
 .purchase-list-heading button { border: 1px solid #52627a; }
 .purchase-list-status { padding: 0 22px; font-size: 11px; color: var(--muted); }
 .purchase-table td { vertical-align: top; }
+.purchase-table td:last-child { text-align: right; }
+.purchase-actions { display: flex; justify-content: flex-end; gap: 7px; }
+.edit-purchase, .delete-purchase, .cancel-edit { color: #e0e8f4; border: 1px solid #52627a; white-space: nowrap; }
+.edit-purchase:hover, .cancel-edit:hover { background: #293b52; }
+.delete-purchase { color: #ffc1c1; border-color: #81545b; }
+.delete-purchase:hover { background: #49303b; border-color: #d3848b; }
+[hidden] { display: none !important; }
 .purchase-table :is(.purchase-description, .purchase-notes) { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 160px; max-width: 300px; }
 .purchase-table small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
 @media (max-width: 600px) { .purchase-fields { grid-template-columns: minmax(0, 1fr); } .purchase-form { padding-inline: 16px; } }

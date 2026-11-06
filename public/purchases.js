@@ -5,7 +5,11 @@ const purchaseFeedback = document.querySelector('#purchase-feedback');
 const purchaseListStatus = document.querySelector('#purchase-list-status');
 const savePurchaseButton = document.querySelector('#save-purchase');
 const reloadPurchasesButton = document.querySelector('#reload-purchases');
+const cancelEditButton = document.querySelector('#cancel-edit');
+const purchaseFormHeading = document.querySelector('#purchase-form-heading');
 const purchaseCurrency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
+let savedPurchases = [];
+let editingPurchaseId = null;
 
 function setDefaultPurchaseDate() {
   const today = new Date();
@@ -19,6 +23,7 @@ function purchaseId(id) {
 }
 
 function showSavedPurchases(purchases) {
+  savedPurchases = purchases;
   purchaseRows.replaceChildren();
   for (const purchase of purchases) {
     const row = document.createElement('tr');
@@ -44,8 +49,98 @@ function showSavedPurchases(purchases) {
       row.append(cell);
     }
     row.lastElementChild.className = 'purchase-notes';
+
+    const actionCell = document.createElement('td');
+    actionCell.className = 'purchase-actions';
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'filter edit-purchase purchase-row-action';
+    editButton.dataset.editPurchase = purchase.id;
+    editButton.textContent = 'Bearbeiten';
+    editButton.setAttribute('aria-label', `${purchaseId(purchase.id)} bearbeiten`);
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'filter delete-purchase purchase-row-action';
+    deleteButton.dataset.deletePurchase = purchase.id;
+    deleteButton.textContent = 'Löschen';
+    deleteButton.setAttribute('aria-label', `${purchaseId(purchase.id)} „${purchase.description}“ löschen`);
+    actionCell.append(editButton, deleteButton);
+    row.append(actionCell);
     purchaseRows.append(row);
   }
+}
+
+
+async function deleteSavedPurchase(purchase, button) {
+  const date = purchase.purchase_date.split('-').reverse().join('.');
+  const confirmed = window.confirm(
+    `Möchtest du diesen Einkauf wirklich dauerhaft löschen?\n\n${purchaseId(purchase.id)} · ${purchase.description}\n${date} · ${purchaseCurrency.format(purchase.price_cents / 100)} · ${purchase.owner}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`
+  );
+  if (!confirmed) return;
+
+  button.disabled = true;
+  button.textContent = 'Wird gelöscht …';
+  purchaseFeedback.classList.remove('error');
+  purchaseFeedback.textContent = '';
+  try {
+    const response = await fetch(`/api/purchases/${purchase.id}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Löschen fehlgeschlagen.');
+
+    const message = `Einkauf ${purchaseId(data.id)} wurde gelöscht.`;
+    if (editingPurchaseId === purchase.id) {
+      leaveEditMode({ message });
+    } else {
+      purchaseFeedback.textContent = message;
+    }
+    await loadPurchases();
+  } catch (error) {
+    purchaseFeedback.classList.add('error');
+    purchaseFeedback.textContent = `Löschen fehlgeschlagen: ${error.message}`;
+    button.disabled = false;
+    button.textContent = 'Löschen';
+  }
+}
+
+function clearValidationErrors() {
+  for (const field of purchaseForm.elements) field.removeAttribute('aria-invalid');
+}
+
+function leaveEditMode({ reset = true, message = '' } = {}) {
+  editingPurchaseId = null;
+  cancelEditButton.hidden = true;
+  cancelEditButton.disabled = false;
+  savePurchaseButton.textContent = 'Einkauf speichern';
+  purchaseFormHeading.textContent = 'Neuen Einkauf erfassen';
+  clearValidationErrors();
+  if (reset) {
+    purchaseForm.reset();
+    setDefaultPurchaseDate();
+  }
+  purchaseFeedback.classList.remove('error');
+  purchaseFeedback.textContent = message;
+}
+
+function enterEditMode(purchase) {
+  editingPurchaseId = purchase.id;
+  cancelEditButton.hidden = false;
+  purchaseFormHeading.textContent = `Einkauf bearbeiten · ${purchaseId(purchase.id)}`;
+  savePurchaseButton.textContent = 'Änderungen speichern';
+  clearValidationErrors();
+  purchaseFeedback.classList.remove('error');
+  purchaseFeedback.textContent = `Du bearbeitest ${purchaseId(purchase.id)}. Die Kauf-ID bleibt erhalten.`;
+
+  const fields = purchaseForm.elements;
+  fields.purchase_date.value = purchase.purchase_date;
+  fields.kind.value = purchase.kind;
+  fields.description.value = purchase.description;
+  fields.price.value = (purchase.price_cents / 100).toFixed(2);
+  fields.quantity.value = String(purchase.quantity);
+  fields.source.value = purchase.source;
+  fields.owner.value = purchase.owner;
+  fields.notes.value = purchase.notes || '';
+  purchaseForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  fields.description.focus({ preventScroll: true });
 }
 
 async function loadPurchases() {
@@ -70,10 +165,28 @@ async function loadPurchases() {
   }
 }
 
+purchaseRows.addEventListener('click', event => {
+  const deleteButton = event.target.closest('[data-delete-purchase]');
+  if (deleteButton) {
+    const purchase = savedPurchases.find(item => item.id === Number(deleteButton.dataset.deletePurchase));
+    if (purchase) return deleteSavedPurchase(purchase, deleteButton);
+    return;
+  }
+
+  const editButton = event.target.closest('[data-edit-purchase]');
+  if (!editButton) return;
+  const purchase = savedPurchases.find(item => item.id === Number(editButton.dataset.editPurchase));
+  if (purchase) enterEditMode(purchase);
+});
+
+cancelEditButton.addEventListener('click', () => {
+  leaveEditMode({ message: 'Bearbeitung abgebrochen. Der Einkauf wurde nicht geändert.' });
+});
+
 purchaseForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (savePurchaseButton.disabled) return;
-  for (const field of purchaseForm.elements) field.removeAttribute('aria-invalid');
+  clearValidationErrors();
   if (!purchaseForm.reportValidity()) return;
 
   const fields = purchaseForm.elements;
@@ -87,13 +200,16 @@ purchaseForm.addEventListener('submit', async event => {
     owner: fields.owner.value,
     notes: fields.notes.value,
   };
+  const wasEditing = editingPurchaseId !== null;
   savePurchaseButton.disabled = true;
-  savePurchaseButton.textContent = 'Wird gespeichert …';
+  cancelEditButton.disabled = wasEditing;
+  savePurchaseButton.textContent = wasEditing ? 'Wird aktualisiert …' : 'Wird gespeichert …';
   purchaseFeedback.classList.remove('error');
   purchaseFeedback.textContent = '';
   try {
-    const response = await fetch('/api/purchases', {
-      method: 'POST',
+    const url = wasEditing ? `/api/purchases/${editingPurchaseId}` : '/api/purchases';
+    const response = await fetch(url, {
+      method: wasEditing ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(purchase),
     });
@@ -106,9 +222,10 @@ purchaseForm.addEventListener('submit', async event => {
       throw new Error([data.error, ...Object.values(errors)].filter(Boolean).join('\n') || 'Speichern fehlgeschlagen.');
     }
 
-    purchaseForm.reset();
-    setDefaultPurchaseDate();
-    purchaseFeedback.textContent = `Einkauf ${purchaseId(data.purchase.id)} wurde gespeichert.`;
+    const savedId = data.purchase.id;
+    leaveEditMode({ message: wasEditing
+      ? `Einkauf ${purchaseId(savedId)} wurde aktualisiert.`
+      : `Einkauf ${purchaseId(savedId)} wurde gespeichert.` });
     // Ein erneutes GET liest den Datensatz tatsächlich aus D1 zurück.
     await loadPurchases();
   } catch (error) {
@@ -116,7 +233,8 @@ purchaseForm.addEventListener('submit', async event => {
     purchaseFeedback.textContent = `Speichern fehlgeschlagen: ${error.message}`;
   } finally {
     savePurchaseButton.disabled = false;
-    savePurchaseButton.textContent = 'Einkauf speichern';
+    cancelEditButton.disabled = false;
+    if (editingPurchaseId !== null) savePurchaseButton.textContent = 'Änderungen speichern';
   }
 });
 

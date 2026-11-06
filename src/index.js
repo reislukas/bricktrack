@@ -55,7 +55,7 @@ export default {
 	 */
 	async fetch(request, env, ctx) {
 		const pathname = new URL(request.url).pathname;
-		if (pathname === '/api/purchases') {
+		if (pathname === '/api/purchases' || /^\/api\/purchases\/\d+$/.test(pathname)) {
 			return handlePurchases(request, env);
 		}
 		if (pathname.startsWith('/api/')) {
