@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
   <script src="purchases.js" defer></script>
+  <script src="purchase-items.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -63,6 +64,26 @@
         <p class="purchase-list-status" id="purchase-list-status" role="status" aria-live="polite">Einkäufe werden geladen …</p>
         <div class="table-wrapper"><table class="purchase-table"><caption class="sr-only">Lokal gespeicherte Einkäufe und Konvolute</caption><thead><tr><th scope="col">Kauf-ID / Datum</th><th scope="col">Beschreibung</th><th scope="col">Gesamtpreis</th><th scope="col">Menge</th><th scope="col">Bezugsquelle</th><th scope="col">Eigentümer</th><th scope="col">Notizen</th><th scope="col">Aktionen</th></tr></thead><tbody id="purchase-rows"></tbody></table></div>
         <noscript><p class="no-script">Bitte JavaScript aktivieren, um Einkäufe zu laden und zu speichern.</p></noscript>
+      </section>
+
+      <section class="panel purchase-panel" id="purchase-items-panel" aria-labelledby="purchase-items-heading" hidden>
+        <div class="panel-heading"><div><p class="eyebrow">BESTANDSARTIKEL</p><h2 id="purchase-items-heading">Artikel zum Einkauf</h2><p id="purchase-items-description"></p></div><button class="filter item-control" type="button" id="close-purchase-items">Schließen</button></div>
+        <div class="item-summary"><p id="item-cost-summary" role="status" aria-live="polite"></p><p class="form-hint">Die Kostenzuordnung sagt nicht aus, ob alle Artikel erfasst wurden. Du kannst jederzeit weitere Artikel hinzufügen.</p></div>
+        <form id="purchase-item-form" class="purchase-form">
+          <h3 id="item-form-heading">Bestandsartikel hinzufügen</h3>
+          <div class="purchase-fields">
+            <label class="wide-field">Beschreibung *<input name="description" maxlength="200" placeholder="z. B. Star-Wars-Minifigur" required></label>
+            <label>Menge *<input name="quantity" type="number" min="1" max="1000000" step="1" value="1" required></label>
+            <label>Themenwelt<select name="theme"><option value="">Nicht angegeben</option><option>Star Wars</option><option>Ninjago</option><option>Harry Potter</option><option>Andere</option></select></label>
+            <label>LEGO-Setnummer<input name="set_number" maxlength="14" pattern="[0-9]{1,10}(-[0-9]{1,3})?" placeholder="z. B. 75367 oder 75367-1"></label>
+            <label>Zugeordnete Einkaufskosten gesamt (€)<input name="allocated_cost" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Noch nicht zugeordnet"></label>
+          </div>
+          <p class="form-hint">Nur Beschreibung und Menge sind Pflicht. Die Kosten gelten für die gesamte Artikelmenge dieser Zeile. Leer bedeutet „noch nicht zugeordnet“, 0 bedeutet ausdrücklich 0 €.</p>
+          <div class="form-actions"><button type="button" class="filter item-control" id="cancel-item-edit" hidden>Abbrechen</button><button class="button" type="submit" id="save-purchase-item">Artikel speichern</button><p id="item-feedback" role="status" aria-live="polite"></p></div>
+        </form>
+        <div class="purchase-list-heading"><h3>Erfasste Artikel</h3><button type="button" class="filter item-control" id="reload-purchase-items">Neu laden</button></div>
+        <p id="item-list-status" class="purchase-list-status" role="status" aria-live="polite"></p>
+        <div class="table-wrapper"><table class="purchase-table"><caption class="sr-only">Bestandsartikel des ausgewählten Einkaufs</caption><thead><tr><th scope="col">Artikel-ID</th><th scope="col">Beschreibung</th><th scope="col">Menge</th><th scope="col">Themenwelt</th><th scope="col">Setnummer</th><th scope="col">Kosten gesamt</th><th scope="col">Aktionen</th></tr></thead><tbody id="purchase-item-rows"></tbody></table></div>
       </section>
 
       <div class="content-grid">

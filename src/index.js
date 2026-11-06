@@ -1,3 +1,4 @@
+import { handlePurchaseItems } from './purchase-items.js';
 import { handlePurchases } from './purchases.js';
 
 import { DurableObject } from "cloudflare:workers";
@@ -55,6 +56,8 @@ export default {
 	 */
 	async fetch(request, env, ctx) {
 		const pathname = new URL(request.url).pathname;
+		const itemRoute = pathname.match(/^\/api\/purchases\/([^/]+)\/items(?:\/([^/]+))?$/);
+		if (itemRoute) return handlePurchaseItems(request, env, itemRoute[1], itemRoute[2]);
 		if (pathname === '/api/purchases' || /^\/api\/purchases\/\d+$/.test(pathname)) {
 			return handlePurchases(request, env);
 		}

@@ -74,6 +74,8 @@ export async function handlePurchases(request, env) {
       }
 
       try {
+        const item = await env.DB.prepare('SELECT id FROM purchase_items WHERE purchase_id = ? LIMIT 1').bind(purchaseId).first();
+        if (item) return json({ error: 'Dieser Einkauf enthält noch Bestandsartikel. Entferne zuerst die zugeordneten Artikel.' }, 409);
         const deletedPurchase = await env.DB.prepare(
           'DELETE FROM purchases WHERE id = ? RETURNING id'
         ).bind(purchaseId).first();
@@ -138,6 +140,9 @@ export async function handlePurchases(request, env) {
       purchase.quantity, purchase.source, purchase.owner, purchase.notes).first();
     return json({ purchase: savedPurchase }, 201);
   } catch (error) {
+    if (/purchase_price_below_item_costs/.test(error.message || '')) {
+      return json({ error: 'Der Einkaufspreis darf nicht niedriger sein als die bereits zugeordneten Artikelkosten.' }, 409);
+    }
     console.error('Einkaufsdatenbank:', error);
     return json({ error: 'Die lokale Einkaufsdatenbank ist nicht erreichbar. Bitte die Datenbankmigration ausführen und erneut versuchen.' }, 500);
   }

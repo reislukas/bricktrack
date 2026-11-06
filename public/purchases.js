@@ -64,7 +64,13 @@ function showSavedPurchases(purchases) {
     deleteButton.dataset.deletePurchase = purchase.id;
     deleteButton.textContent = 'Löschen';
     deleteButton.setAttribute('aria-label', `${purchaseId(purchase.id)} „${purchase.description}“ löschen`);
-    actionCell.append(editButton, deleteButton);
+    const itemsButton = document.createElement('button');
+    itemsButton.type = 'button';
+    itemsButton.className = 'filter show-purchase-items';
+    itemsButton.dataset.purchaseItems = purchase.id;
+    itemsButton.textContent = 'Bestandsartikel';
+    itemsButton.setAttribute('aria-label', `Bestandsartikel zu ${purchaseId(purchase.id)} anzeigen`);
+    actionCell.append(itemsButton, editButton, deleteButton);
     row.append(actionCell);
     purchaseRows.append(row);
   }
@@ -152,6 +158,7 @@ async function loadPurchases() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Einkäufe konnten nicht geladen werden.');
     showSavedPurchases(data.purchases);
+    if (typeof refreshOpenPurchaseItems === 'function') await refreshOpenPurchaseItems(data.purchases);
     purchaseListStatus.textContent = data.purchases.length
       ? `${data.purchases.length} Einkäufe lokal gespeichert.`
       : 'Noch keine Einkäufe gespeichert. Erfasst oben euren ersten Einkauf.';
@@ -166,6 +173,8 @@ async function loadPurchases() {
 }
 
 purchaseRows.addEventListener('click', event => {
+  const itemsButton = event.target.closest('[data-purchase-items]');
+  if (itemsButton) return openPurchaseItems(Number(itemsButton.dataset.purchaseItems));
   const deleteButton = event.target.closest('[data-delete-purchase]');
   if (deleteButton) {
     const purchase = savedPurchases.find(item => item.id === Number(deleteButton.dataset.deletePurchase));
