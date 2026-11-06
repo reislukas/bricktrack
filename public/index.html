@@ -1,20 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
-		<p>This page comes from a static asset stored at `public/index.html` as configured in `wrangler.jsonc`.</p>
-	</head>
-	<body>
-		<h1 id="heading"></h1>
-		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
-				});
-		</script>
-	</body>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BrickTrack – der Überblick für das LEGO-Reselling von mancave.">
+  <title>BrickTrack · Übersicht</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+  <script src="purchases.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt</a>
+  <aside class="sidebar">
+    <a class="brand" href="#main" aria-label="BrickTrack Startseite"><span class="brand-icon" aria-hidden="true">▦</span> BrickTrack<span class="brand-dot">.</span></a>
+    <div class="workspace"><span class="workspace-avatar">m</span><div><strong>mancave</strong><small>LEGO Reselling</small></div></div>
+    <nav aria-label="Hauptnavigation">
+      <span class="nav-label">DEIN WORKSPACE</span>
+      <a class="nav-link active" href="#main" aria-current="page"><span aria-hidden="true">▦</span> Übersicht</a>
+      <a class="nav-link" href="#purchases"><span aria-hidden="true">↙</span> Einkäufe</a>
+      <a class="nav-link" href="#activities"><span aria-hidden="true">⇄</span> Beispielaktivitäten</a>
+      <a class="nav-link" href="#next-steps"><span aria-hidden="true">↗</span> Nächste Schritte</a>
+    </nav>
+    <div class="sidebar-note"><span class="small-brick" aria-hidden="true">▦</span><strong>Stein für Stein.</strong><p>Ein klarer Überblick für euer nächstes Kapitel.</p></div>
+    <div class="sidebar-footer"><span class="status-dot"></span> Lokaler Prototyp <span>v0.1</span></div>
+  </aside>
+
+  <div class="page">
+    <header class="topbar"><span>Workspace <span class="breadcrumb">/</span> <strong>Übersicht</strong></span><span class="demo-badge"><span class="status-dot"></span> Lokale Entwicklung</span></header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading"><div><p class="eyebrow">MANCAVE · BRICKTRACK</p><h1>Alles im Überblick.</h1><p>Eure Steine. Eure Zahlen. Euer nächster Schritt.</p></div><a class="button" href="#activities">Beispieldaten ansehen <span aria-hidden="true">↗</span></a></div>
+
+      <section class="welcome" aria-labelledby="welcome-title">
+        <div class="welcome-copy"><span class="welcome-label">KLEINE STEINE. GROSSE PLÄNE.</span><h2 id="welcome-title">Mehr Überblick.<br>Mehr Zeit fürs Wesentliche.</h2><p>Hier entsteht euer Platz für Einkäufe, Verkäufe und alles dazwischen. Der erste Stein ist gelegt.</p><a href="#next-steps">So geht es weiter <span aria-hidden="true">→</span></a></div>
+        <div class="brick-scene" aria-hidden="true"><div class="brick brick-back"><i></i><i></i><i></i><i></i></div><div class="brick brick-front"><i></i><i></i><i></i><i></i></div><span class="scene-label">BUILD. TRACK. REPEAT.</span></div>
+      </section>
+
+      <section class="metrics" aria-label="Kennzahlen aus allen Beispieldaten">
+        <article class="metric"><div class="metric-label">Einkäufe <span aria-hidden="true">↙</span></div><strong id="purchase-total">–</strong><small>Gesamtausgaben · Beispiel</small></article>
+        <article class="metric"><div class="metric-label">Verkäufe <span aria-hidden="true">↗</span></div><strong id="sale-total">–</strong><small>Verkaufserlöse vor Gebühren · Beispiel</small></article>
+        <article class="metric"><div class="metric-label">Aktivitäten <span aria-hidden="true">⇄</span></div><strong id="activity-total">–</strong><small>Fiktive Einkaufs- und Verkaufsvorgänge</small></article>
+      </section>
+
+      <section class="panel purchase-panel" id="purchases" aria-labelledby="purchases-heading">
+        <div class="panel-heading"><div><p class="eyebrow">EINKAUFSVERWALTUNG</p><h2 id="purchases-heading">Einkäufe & Konvolute</h2><p>Neue Einkäufe werden dauerhaft in eurer lokalen Datenbank gespeichert.</p></div><span class="tag">LOKAL</span></div>
+        <form id="purchase-form" class="purchase-form">
+          <p class="form-hint">Die Kauf-ID wird beim Speichern automatisch vergeben. Pflichtfelder sind mit * markiert.</p>
+          <div class="purchase-fields">
+            <label>Einkaufsdatum *<input name="purchase_date" type="date" min="1900-01-01" max="9999-12-31" required></label>
+            <label>Art *<select name="kind" required><option>Einzelkauf</option><option>Konvolut</option></select></label>
+            <label class="wide-field">Beschreibung *<input name="description" maxlength="200" placeholder="z. B. fiktives City-Konvolut" required></label>
+            <label>Einkaufspreis gesamt (€) *<input name="price" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="0,00" required></label>
+            <label>Menge *<input name="quantity" type="number" min="1" max="1000000" step="1" value="1" required></label>
+            <label>Bezugsquelle *<input name="source" maxlength="120" placeholder="z. B. Flohmarkt" required></label>
+            <label>Eigentümer *<select name="owner" required><option value="">Bitte auswählen</option><option>Jonas</option><option>Fred</option><option>Gemeinsam</option></select></label>
+            <label class="wide-field">Notizen<textarea name="notes" maxlength="2000" rows="3" placeholder="Optionale Angaben zu Zustand oder Inhalt"></textarea></label>
+          </div>
+          <p class="form-hint">Der Preis gilt für den gesamten Einkauf. Menge: Anzahl gekaufter Einheiten; ein unsortiertes Konvolut kann als 1 Einheit erfasst werden.</p>
+          <div class="form-actions"><button class="button" type="submit" id="save-purchase">Einkauf speichern</button><p id="purchase-feedback" role="status" aria-live="polite"></p></div>
+        </form>
+        <div class="purchase-list-heading"><h3>Gespeicherte Einkäufe</h3><button class="filter" type="button" id="reload-purchases">Neu laden</button></div>
+        <p class="purchase-list-status" id="purchase-list-status" role="status" aria-live="polite">Einkäufe werden geladen …</p>
+        <div class="table-wrapper"><table class="purchase-table"><caption class="sr-only">Lokal gespeicherte Einkäufe und Konvolute</caption><thead><tr><th scope="col">Kauf-ID / Datum</th><th scope="col">Beschreibung</th><th scope="col">Gesamtpreis</th><th scope="col">Menge</th><th scope="col">Bezugsquelle</th><th scope="col">Eigentümer</th><th scope="col">Notizen</th></tr></thead><tbody id="purchase-rows"></tbody></table></div>
+        <noscript><p class="no-script">Bitte JavaScript aktivieren, um Einkäufe zu laden und zu speichern.</p></noscript>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel activities" id="activities" aria-labelledby="activity-heading">
+          <div class="panel-heading"><div><h2 id="activity-heading">Letzte Aktivitäten</h2><p>Ein erster Blick auf euren zukünftigen Alltag.</p></div><span class="tag">BEISPIEL</span></div>
+          <div class="filters"><div class="filter-buttons" role="group" aria-label="Nach Vorgangsart filtern"><button class="filter active" data-filter="all" aria-pressed="true">Alle</button><button class="filter" data-filter="purchase" aria-pressed="false">Einkäufe</button><button class="filter" data-filter="sale" aria-pressed="false">Verkäufe</button></div><label class="owner-filter">Eigentum <select id="owner-filter"><option value="all">Alle</option><option value="Jonas">Jonas</option><option value="Fred">Fred</option><option value="Gemeinsam">Gemeinsam</option></select></label></div>
+          <div class="table-wrapper"><table><caption class="sr-only">Fiktive Einkaufs- und Verkaufsaktivitäten</caption><thead><tr><th scope="col">Artikel / Konvolut</th><th scope="col">Eigentum</th><th scope="col">Betrag</th></tr></thead><tbody id="activity-rows"></tbody></table></div>
+          <p class="table-footer" id="activity-count" role="status" aria-live="polite"></p>
+          <noscript><p class="no-script">Bitte aktiviere JavaScript, um die fiktiven Aktivitäten und Kennzahlen zu sehen.</p></noscript>
+        </section>
+
+        <section class="panel roadmap" id="next-steps" aria-labelledby="steps-heading"><div class="panel-heading"><div><p class="eyebrow">DER PLAN</p><h2 id="steps-heading">Stein für Stein.</h2></div><span aria-hidden="true">↗</span></div><p class="roadmap-intro">Wir bauen BrickTrack Schritt für Schritt gemeinsam auf.</p><ol class="steps"><li class="current"><span class="step-number">✓</span><div><strong>Startseite & Überblick</strong><small>Der erste Schritt steht.</small></div></li><li><span class="step-number">02</span><div><strong>Einkäufe erfassen</strong><small>Sets und Konvolute festhalten.</small></div></li><li><span class="step-number">03</span><div><strong>Verkäufe zuordnen</strong><small>Artikel mit Einkäufen verbinden.</small></div></li><li><span class="step-number">04</span><div><strong>Zahlen zusammenbringen</strong><small>Gebühren, Anteile und Gewinne.</small></div></li><li><span class="step-number">05</span><div><strong>Excel-Daten übernehmen</strong><small>Einmaliger Import zum Einstieg.</small></div></li></ol><div class="ownership-note"><strong>Jonas + Fred</strong><p>Geplant: eigenes Eigentum und gemeinsame Käufe mit 50/50-Aufteilung.</p></div></section>
+      </div>
+      <footer class="page-footer"><span><strong>BrickTrack</strong> für mancave</span><span>Einkäufe lokal gespeichert · Übersicht mit Beispieldaten</span></footer>
+    </main>
+  </div>
+</body>
 </html>

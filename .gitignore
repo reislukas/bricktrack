@@ -161,7 +161,40 @@ dist
 # wrangler project
 
 .dev.vars*
-!.dev.vars.example
 .env*
-!.env.example
 .wrangler/
+
+# Lokale Cloudflare-Datenbankdateien
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.db
+*.db-*
+
+# Geschäftsexporte und Tabellen (vor einem öffentlichen Push lokal halten)
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.ods
+
+# Zugangsschlüssel, Zertifikate und lokale Zugangsdaten
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.aws/
+.ssh/
+.npmrc
+credentials
+credentials.*
+*-credentials.*
+service-account*.json
+*-service-account*.json
+secrets.*
+*.tfstate
+*.tfstate.*

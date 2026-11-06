@@ -11,6 +11,12 @@
 		// The path to the directory containing the `index.html` file to be served at `/`
 		"directory": "./public"
 	},
+	// Nur lokal: noch keine Cloudflare-Datenbank-ID und kein Remote-Binding.
+	"d1_databases": [{
+		"binding": "DB",
+		"database_name": "bricktrack-local",
+		"migrations_dir": "migrations"
+	}],
 	"durable_objects": {
 		"bindings": [
 			{

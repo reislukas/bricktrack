@@ -1,3 +1,5 @@
+import { handlePurchases } from './purchases.js';
+
 import { DurableObject } from "cloudflare:workers";
 
 /**
@@ -52,6 +54,13 @@ export default {
 	 * @returns {Promise<Response>} The response to be sent back to the client
 	 */
 	async fetch(request, env, ctx) {
+		const pathname = new URL(request.url).pathname;
+		if (pathname === '/api/purchases') {
+			return handlePurchases(request, env);
+		}
+		if (pathname.startsWith('/api/')) {
+			return Response.json({ error: 'API-Endpunkt nicht gefunden.' }, { status: 404 });
+		}
 		// Create a stub to open a communication channel with the Durable Object
 		// instance named "foo".
 		//

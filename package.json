@@ -5,7 +5,9 @@
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "start": "wrangler dev"
+    "start": "wrangler dev",
+    "db:migrate": "wrangler d1 migrations apply bricktrack-local --local",
+    "test": "node --test tests/purchases.test.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.158.0"
